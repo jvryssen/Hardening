@@ -31,10 +31,6 @@ chown root:root /etc/at.allow
 chown root:root /etc/ssh/sshd_config
 chmod og-rwx /etc/ssh/sshd_config
 
------------------
-
-5.2.2 Ensure SSH Protocol is set to 2
-
 vi /etc/ssh/sshd_config
 Protocol 2
 LogLevel INFO

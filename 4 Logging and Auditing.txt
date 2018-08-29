@@ -39,8 +39,6 @@ grub2-mkconfig -o /boot/grub2/grub.cfg
 
 -----------------
 
---- /ETC/AUDIT/AUDIT.RULES --
-
 vi /etc/audit/audit.rules
 # -and/or-
 vi /etc/audit/audit.d/audit.rules
