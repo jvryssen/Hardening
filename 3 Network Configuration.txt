@@ -1,0 +1,201 @@
+3 Network Configuration
+3.1 Network Parameters (Host Only)
+
+--- /ETC/SYSCTL.CONF ---
+
+vi /etc/sysctl.conf
+
+## Hardening - 1.5.3 Ensure address space layout randomization (ASLR) is enabled #
+kernel.randomize_va_space = 2
+## Hardening - 1.5.1 Ensure core dumps are restricted #
+fs.suid_dumpable = 0
+## Hardening - 3. Network Config #
+net.ipv4.ip_forward = 0
+net.ipv4.conf.all.send_redirects = 0
+net.ipv4.conf.default.send_redirects = 0
+net.ipv4.conf.all.accept_source_route = 0
+net.ipv4.conf.default.accept_source_route = 0
+net.ipv4.conf.all.accept_redirects = 0
+net.ipv4.conf.default.accept_redirects = 0
+net.ipv4.conf.all.secure_redirects = 0
+net.ipv4.conf.default.secure_redirects = 0
+net.ipv4.conf.all.log_martians = 1
+net.ipv4.conf.default.log_martians = 1
+net.ipv4.icmp_echo_ignore_broadcasts = 1
+net.ipv4.icmp_ignore_bogus_error_responses = 1
+net.ipv4.conf.all.rp_filter = 1
+net.ipv4.conf.default.rp_filter = 1
+net.ipv4.tcp_syncookies = 1
+net.ipv6.conf.all.accept_ra = 0
+net.ipv6.conf.default.accept_ra = 0
+net.ipv6.conf.all.accept_redirects = 0
+net.ipv6.conf.default.accept_redirects = 0
+
+
+# Then run:
+sysctl -w net.ipv4.ip_forward=0
+sysctl -w net.ipv4.conf.all.send_redirects=0
+sysctl -w net.ipv4.conf.default.send_redirects=0
+sysctl -w net.ipv4.conf.all.accept_source_route=0
+sysctl -w net.ipv4.conf.default.accept_source_route=0
+sysctl -w net.ipv4.conf.all.accept_redirects=0
+sysctl -w net.ipv4.conf.default.accept_redirects=0
+sysctl -w net.ipv4.conf.all.secure_redirects=0
+sysctl -w net.ipv4.conf.default.secure_redirects=0
+sysctl -w net.ipv4.conf.all.log_martians=1
+sysctl -w net.ipv4.conf.default.log_martians=1
+sysctl -w net.ipv4.icmp_echo_ignore_broadcasts=1
+sysctl -w net.ipv4.icmp_ignore_bogus_error_responses=1
+sysctl -w net.ipv4.conf.all.rp_filter=1
+sysctl -w net.ipv4.conf.default.rp_filter=1
+sysctl -w net.ipv4.tcp_syncookies=1
+sysctl -w net.ipv4.route.flush=1
+sysctl -w net.ipv6.conf.all.accept_ra=0
+sysctl -w net.ipv6.conf.default.accept_ra=0
+sysctl -w net.ipv6.conf.all.accept_redirects=0
+sysctl -w net.ipv6.conf.default.accept_redirects=0
+sysctl -w net.ipv6.route.flush=1
+
+--- ^^^ /ETC/SYSCTL.CONF ^^^ ---
+
+################
+
+3.4 TCP Wrappers
+
+rpm -q tcp_wrappers
+yum install tcp_wrappers
+
+################
+
+3.4.2 Ensure /etc/hosts.allow is configured (Scored)
+
+# Replave <net>/<mask> with actual values:
+echo "ALL: <net>/<mask>, <net>/<mask>, ..." >/etc/hosts.allow
+
+################
+
+3.4.3 Ensure /etc/hosts.deny is configured (Scored)
+
+# This will lock you out if /etc/hosts.allow is not set up correctly
+echo "ALL: ALL" >> /etc/hosts.deny
+
+################
+
+3.4.4 Ensure permissions on /etc/hosts.allow are configured (Scored)
+
+chown root:root /etc/hosts.allow
+chmod 644 /etc/hosts.allow
+
+################
+
+3.4.5 Ensure permissions on /etc/hosts.deny are configured (Scored)
+
+chown root:root /etc/hosts.deny
+chmod 644 /etc/hosts.deny
+
+################################
+
+3.6 Firewall Configuration
+
+#!/bin/bash
+# Flush IPtables rules
+iptables -F
+
+# Ensure   default deny firewall policy
+iptables   -P INPUT DROP
+iptables   -P OUTPUT DROP
+iptables   -P FORWARD DROP
+
+# Ensure   loopback traffic is configured
+iptables   -A INPUT -i lo -j ACCEPT
+iptables   -A OUTPUT -o lo -j ACCEPT
+iptables   -A INPUT -s 127.0.0.0/8 -j DROP
+
+# Ensure   outbound and established connections are configured
+iptables   -A OUTPUT -p tcp -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables   -A OUTPUT -p udp -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables   -A OUTPUT -p icmp -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables   -A INPUT -p tcp -m state --state ESTABLISHED -j ACCEPT
+iptables   -A INPUT -p udp -m state --state ESTABLISHED -j ACCEPT
+iptables   -A INPUT -p icmp -m state --state ESTABLISHED -j ACCEPT
+
+# Open inbound ssh (tcp port 22) connections
+iptables -A INPUT -p tcp --dport 22 -m state --state NEW -j ACCEPT
+
+################################
+
+3.6.1 Ensure iptables is installed (Scored)
+
+yum install iptables
+
+################
+
+3.6.2 Ensure default deny firewall policy (Scored)
+
+### But first, don't lock yourself out ###
+
+# Allow Established and Related Incoming Connections:
+iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+# Allow Established Outgoing Connections:
+iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED -j ACCEPT
+
+# Allow all incoming SSH connections:
+iptables -A INPUT -p tcp --dport 22 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+iptables -A OUTPUT -p tcp --sport 22 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+
+###
+
+## AUDIT ##
+Run the following command and verify that the policy for the INPUT , OUTPUT , and FORWARD chains is DROP or REJECT :
+# iptables -L
+Chain INPUT (policy DROP)
+Chain FORWARD (policy DROP)
+Chain OUTPUT (policy DROP)
+
+### Remediation ###
+Run the following commands to implement a default DROP policy:
+
+iptables -P INPUT DROP
+iptables -P OUTPUT DROP
+iptables -P FORWARD DROP
+
+################
+
+3.6.3 Ensure loopback traffic is configured (Scored)
+
+Run the following commands and verify output includes the listed rules IN ORDER:
+
+# iptables -L INPUT -v -n
+Chain INPUT (policy DROP 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out               source
+destination
+    0     0 ACCEPT     all -- lo       *                 0.0.0.0/0                0.0.0.0/0
+    0     0 DROP       all -- *        *                 127.0.0.0/8              0.0.0.0/0
+
+ # iptables -L OUTPUT -v -n
+Chain OUTPUT (policy DROP 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out               source
+destination
+    0     0 ACCEPT     all -- *        lo                0.0.0.0/0                0.0.0.0/0
+
+### Remediation ###
+Run the following commands to implement the loopback rules:
+# iptables -A INPUT -i lo -j ACCEPT
+# iptables -A OUTPUT -o lo -j ACCEPT
+# iptables -A INPUT -s 127.0.0.0/8 -j DROP
+
+################
+
+3.6.5 Ensure firewall rules exist for all open ports (Scored)
+
+netstat -ln
+
+iptables -L INPUT -v -n
+
+Verify all open ports listening on non-localhost addresses have at least one firewall rule.
+
+### Remediation ###
+For each port identified in the audit which does not have a firewall rule establish a proper rule for accepting inbound connections:
+iptables -A INPUT -p <protocol> --dport <port> -m state --state NEW -j
+	ACCEPT

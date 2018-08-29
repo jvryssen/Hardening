@@ -1,0 +1,94 @@
+2 Services
+2.1 inetd Services
+
+chkconfig chargen-dgram off
+chkconfig chargen-stream off
+chkconfig daytime-dgram off
+chkconfig daytime-stream off
+chkconfig discard-dgram off
+chkconfig discard-stream off
+chkconfig echo-dgram off
+chkconfig echo-stream off
+chkconfig time-dgram off
+chkconfig time-stream off
+chkconfig tftp off
+systemctl disable xinetd
+
+################################
+
+2.2 Special Purpose Services
+2.2.1 Time Synchronization
+
+rpm -q ntp
+rpm -q chrony
+
+################
+
+2.2.1.2 Ensure NTP is configured (Scored)
+
+vi /etc/ntp.conf
+restrict -4 default kod nomodify notrap nopeer noquery
+restrict -6 default kod nomodify notrap nopeer noquery
+server 10.20.40.100
+server 10.10.20.25
+
+vi /etc/sysconfig/ntpd
+# Add to existing entries:
+OPTIONS="-u ntp:ntp"
+
+################
+
+2.2.1.3 Ensure chrony is configured (Scored)
+
+vi /etc/chrony.conf
+server 10.112.0.2
+server 10.113.0.2
+
+vi /etc/sysconfig/chronyd 
+# Add: '-u chrony':
+OPTIONS="-u chrony"
+
+################
+
+yum remove xorg-x11*
+
+systemctl disable avahi-daemon
+systemctl disable cups
+systemctl disable dhcpd
+systemctl disable slapd
+systemctl disable nfs
+systemctl disable nfs-server
+systemctl disable rpcbind
+systemctl disable named
+systemctl disable vsftpd
+systemctl disable httpd
+systemctl disable dovecot
+systemctl disable smb
+systemctl disable squid
+systemctl disable snmpd
+
+################
+
+2.2.15 Ensure mail transfer agent is configured for local-only mode (Scored)
+
+vi /etc/postfix/main.cf
+inet_interfaces = loopback-only
+
+systemctl restart postfix
+
+################
+
+systemctl disable ypserv
+systemctl disable rsh.socket
+systemctl disable rlogin.socket
+systemctl disable rexec.socket
+systemctl disable ntalk
+systemctl disable telnet.socket
+systemctl disable tftp.socket
+systemctl disable rsyncd
+
+yum remove ypbind
+yum remove rsh
+yum remove talk
+yum remove telnet
+yum remove openldap-clients

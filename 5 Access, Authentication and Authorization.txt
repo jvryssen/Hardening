@@ -1,0 +1,184 @@
+5 Access, Authentication and Authorization
+
+5.1 Configure cron
+
+### CONFIGURE CRON ###
+
+chown root:root /etc/crontab
+chmod og-rwx /etc/crontab
+chown root:root /etc/cron.hourly*
+chmod og-rwx /etc/cron.hourly*
+chown root:root /etc/cron.daily*
+chmod og-rwx /etc/cron.daily*
+chown root:root /etc/cron.weekly*
+chmod og-rwx /etc/cron.weekly*
+chown root:root /etc/cron.monthly*
+chmod og-rwx /etc/cron.monthly*
+chown root:root /etc/cron.d*
+chmod og-rwx /etc/cron.d*
+
+rm -rf /etc/cron.deny
+rm -rf /etc/at.deny
+
+touch /etc/cron.allow
+touch /etc/at.allow
+chmod og-rwx /etc/cron.allow
+chmod og-rwx /etc/at.allow
+chown root:root /etc/cron.allow
+chown root:root /etc/at.allow
+
+### ^^^ CONFIGURE CRON ^^^ ###
+
+5.2 SSH Server Configuration
+
+chown root:root /etc/ssh/sshd_config
+chmod og-rwx /etc/ssh/sshd_config
+
+################
+
+5.2.2 Ensure SSH Protocol is set to 2
+
+vi /etc/ssh/sshd_config
+Protocol 2
+LogLevel INFO
+X11Forwarding no
+MaxAuthTries 4
+IgnoreRhosts yes
+HostbasedAuthentication no
+PermitRootLogin no
+PermitEmptyPasswords no
+PermitUserEnvironment no
+MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-512,hmac-sha2-256,umac-128@openssh.com
+ClientAliveInterval 300
+ClientAliveCountMax 0
+LoginGraceTime 60
+# Replace <userlist> & <grouplist> with actual values.
+AllowUsers <userlist>
+AllowGroups <grouplist>
+DenyUsers <userlist>
+DenyGroups <grouplist>
+Banner /etc/issue.net
+
+################################
+
+5.3 Configure PAM
+5.3.1 Ensure password creation requirements are configured
+
+vi /etc/pam.d/password-auth
+vi /etc/pam.d/system-auth
+password requisite pam_pwquality.so try_first_pass retry=3
+
+vi /etc/security/pwquality.conf
+minlen = 14
+dcredit = -1
+ucredit = -1
+ocredit = -1
+lcredit = -1
+
+################
+
+5.3.2 Ensure lockout for failed password attempts is configured
+
+vi /etc/pam.d/password-auth
+vi /etc/pam.d/system-auth
+
+auth   [success=1 default=bad]		pam_unix.so
+
+################
+
+5.3.3 Ensure password reuse is limited
+
+vi /etc/pam.d/password-auth
+vi /etc/pam.d/system-auth
+
+password sufficient pam_unix.so remember=5
+# -or-
+password required pam_pwhistory.so remember=5
+
+################
+
+5.3.4 Ensure password hashing algorithm is SHA-512
+
+vi /etc/pam.d/password-auth
+vi /etc/pam.d/system-auth
+
+password sufficient pam_unix.so sha512
+
+################################
+
+5.4 User Accounts and Environment
+5.4.1.1 Ensure password expiration is 365 days or less
+
+vi /etc/login.defs
+PASS_MAX_DAYS 90
+
+################
+
+5.4.1.2 Ensure minimum days between password changes is 7 or more
+
+grep PASS_MIN_DAYS /etc/login.defs
+PASS_MIN_DAYS 7
+PASS_WARN_AGE 7
+
+5.4.1.4 Ensure inactive password lock is 30 days or less
+useradd -D -f 30
+chage --inactive 30 <user>
+
+################
+
+5.4.1.5 Ensure all users last password change date is in the past
+cat /etc/shadow | cut -d: -f1
+	<list of users>
+
+chage --list <user>
+	Last Change                                                       : <date>
+
+################
+
+5.4.2 Ensure system accounts are non-login
+
+Set the shell for any accounts returned by the audit script to /sbin/nologin :
+# usermod -s /sbin/nologin <user>
+
+The following script will automatically set all user shells required to /sbin/nologin and lock the sync , shutdown , and halt users:
+
+#!/bin/bash
+for user in `awk -F: '($3 < 1000) {print $1 }' /etc/passwd` ; do
+  if [ $user != "root" ]; then
+     usermod -L $user
+     if [ $user != "sync" ] && [ $user != "shutdown" ] && [ $user != "halt" ];
+then
+       usermod -s /sbin/nologin $user
+       fi
+  fi
+done
+
+################
+
+5.4.3 Ensure default group for the root account is GID 0
+usermod -g 0 root
+
+################
+
+5.4.4 Ensure default user umask is 027 or more restrictive
+vi /etc/bashrc
+vi /etc/profile
+vi /etc/profile.d/*.sh 
+	umask 027
+
+################
+
+5.4.5 Ensure default user shell timeout is 900 seconds or less
+
+vi /etc/bashrc
+vi /etc/profile
+	TMOUT=600
+
+################
+
+5.6 Ensure access to the su command is restricted
+vi /etc/pam.d/su
+	auth required pam_wheel.so use_uid
+
+Create a comma separated list of users in the wheel statement in the /etc/group file:
+wheel:x:10:root,<user list>
