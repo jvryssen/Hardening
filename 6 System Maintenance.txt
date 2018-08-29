@@ -1,10 +1,6 @@
 6 System Maintenance
-
 6.1 System File Permissions
-
-### CHECK PERMISSIONS ###
-
-6.1.1 Audit system file permissions (Not Scored)
+6.1.1 Audit system file permissions
 
 chown root:root /etc/passwd
 chmod 644 /etc/passwd
@@ -23,44 +19,42 @@ chmod u-x,go-wx /etc/group-
 chown root:root /etc/gshadow-
 chmod 000 /etc/gshadow-
 
-### ^^^ CHECK PERMISSIONS ^^^ ###
+-------------------------------------------
 
-################################
+6.1.10 Ensure no world writable files exist
 
-6.1.10 Ensure no world writable files exist (Scored)
+# Removing write access for the "other" category ( chmod o-w <filename> ) is advisable, but always CONSULT RELEVANT VENDOR DOCUMENTATION to avoid breaking any application dependencies on a given file.
 
 df --local -P | awk {'if (NR!=1) print $6'} | xargs -I '{}' find '{}' -xdev -type f -perm -0002
 
 find <partition> -xdev -type f -perm -0002
 
-# Removing write access for the "other" category ( chmod o-w <filename> ) is advisable, but always CONSULT RELEVANT VENDOR DOCUMENTATION to avoid breaking any application dependencies on a given file.
+-------------------------------------------
 
-################################
-
-6.1.11 Ensure no unowned files or directories exist (Scored)
+6.1.11 Ensure no unowned files or directories exist
 
 df --local -P | awk {'if (NR!=1) print $6'} | xargs -I '{}' find '{}' -xdev -nouser
 
 find <partition> -xdev -nouser
 
-################################
+-------------------------------------------
 
-6.1.12 Ensure no ungrouped files or directories exist (Scored)
+6.1.12 Ensure no ungrouped files or directories exist
 
 df --local -P | awk {'if (NR!=1) print $6'} | xargs -I '{}' find '{}' -xdev -nogroup
 
 find <partition> -xdev -nogroup
 
-################################################################
+-------------------------------------------
 
 6.2 User and Group Settings
-6.2.1 Ensure password fields are not empty (Scored)
+6.2.1 Ensure password fields are not empty
 
 cat /etc/shadow | awk -F: '($2 == "" ) { print $1 " does not have a password "}'
 
 passwd -l <username>
 
-################################
+-------------------------------------------
 
 6.2.2/3/4 Ensure no legacy "+" entries exist
 
@@ -68,12 +62,12 @@ grep '^\+:' /etc/passwd
 grep '^\+:' /etc/shadow
 grep '^\+:' /etc/group
 
-################################
+-------------------------------------------
 
-6.2.5 Ensure root is the only UID 0 account (Scored)
+6.2.5 Ensure root is the only UID 0 account
 
 cat /etc/passwd | awk -F: '($3 == 0) { print $1 }'
 
-################################
+-------------------------------------------
 
 ## SCP scripts to target server and run ##

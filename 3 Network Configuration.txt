@@ -1,7 +1,7 @@
 3 Network Configuration
 3.1 Network Parameters (Host Only)
 
---- /ETC/SYSCTL.CONF ---
+----------------------------------
 
 vi /etc/sysctl.conf
 
@@ -31,7 +31,6 @@ net.ipv6.conf.default.accept_ra = 0
 net.ipv6.conf.all.accept_redirects = 0
 net.ipv6.conf.default.accept_redirects = 0
 
-
 # Then run:
 sysctl -w net.ipv4.ip_forward=0
 sysctl -w net.ipv4.conf.all.send_redirects=0
@@ -56,44 +55,42 @@ sysctl -w net.ipv6.conf.all.accept_redirects=0
 sysctl -w net.ipv6.conf.default.accept_redirects=0
 sysctl -w net.ipv6.route.flush=1
 
---- ^^^ /ETC/SYSCTL.CONF ^^^ ---
-
-################
+----------------------------------
 
 3.4 TCP Wrappers
 
 rpm -q tcp_wrappers
 yum install tcp_wrappers
 
-################
+-----------------
 
-3.4.2 Ensure /etc/hosts.allow is configured (Scored)
+3.4.2 Ensure /etc/hosts.allow is configured
 
-# Replave <net>/<mask> with actual values:
+# Replace <net>/<mask> with actual values:
 echo "ALL: <net>/<mask>, <net>/<mask>, ..." >/etc/hosts.allow
 
-################
+-----------------
 
-3.4.3 Ensure /etc/hosts.deny is configured (Scored)
+3.4.3 Ensure /etc/hosts.deny is configured
 
 # This will lock you out if /etc/hosts.allow is not set up correctly
 echo "ALL: ALL" >> /etc/hosts.deny
 
-################
+-----------------
 
-3.4.4 Ensure permissions on /etc/hosts.allow are configured (Scored)
+3.4.4 Ensure permissions on /etc/hosts.allow are configured
 
 chown root:root /etc/hosts.allow
 chmod 644 /etc/hosts.allow
 
-################
+-----------------
 
-3.4.5 Ensure permissions on /etc/hosts.deny are configured (Scored)
+3.4.5 Ensure permissions on /etc/hosts.deny are configured
 
 chown root:root /etc/hosts.deny
 chmod 644 /etc/hosts.deny
 
-################################
+----------------------------------
 
 3.6 Firewall Configuration
 
@@ -122,15 +119,15 @@ iptables   -A INPUT -p icmp -m state --state ESTABLISHED -j ACCEPT
 # Open inbound ssh (tcp port 22) connections
 iptables -A INPUT -p tcp --dport 22 -m state --state NEW -j ACCEPT
 
-################################
+-----------------
 
-3.6.1 Ensure iptables is installed (Scored)
+3.6.1 Ensure iptables is installed
 
 yum install iptables
 
-################
+-----------------
 
-3.6.2 Ensure default deny firewall policy (Scored)
+3.6.2 Ensure default deny firewall policy
 
 ### But first, don't lock yourself out ###
 
@@ -143,8 +140,6 @@ iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED -j ACCEPT
 # Allow all incoming SSH connections:
 iptables -A INPUT -p tcp --dport 22 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
 iptables -A OUTPUT -p tcp --sport 22 -m conntrack --ctstate ESTABLISHED -j ACCEPT
-
-###
 
 ## AUDIT ##
 Run the following command and verify that the policy for the INPUT , OUTPUT , and FORWARD chains is DROP or REJECT :
@@ -160,9 +155,9 @@ iptables -P INPUT DROP
 iptables -P OUTPUT DROP
 iptables -P FORWARD DROP
 
-################
+-----------------
 
-3.6.3 Ensure loopback traffic is configured (Scored)
+3.6.3 Ensure loopback traffic is configured
 
 Run the following commands and verify output includes the listed rules IN ORDER:
 
@@ -185,9 +180,9 @@ Run the following commands to implement the loopback rules:
 # iptables -A OUTPUT -o lo -j ACCEPT
 # iptables -A INPUT -s 127.0.0.0/8 -j DROP
 
-################
+-----------------
 
-3.6.5 Ensure firewall rules exist for all open ports (Scored)
+3.6.5 Ensure firewall rules exist for all open ports
 
 netstat -ln
 

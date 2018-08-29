@@ -1,8 +1,5 @@
 5 Access, Authentication and Authorization
-
 5.1 Configure cron
-
-### CONFIGURE CRON ###
 
 chown root:root /etc/crontab
 chmod og-rwx /etc/crontab
@@ -27,14 +24,14 @@ chmod og-rwx /etc/at.allow
 chown root:root /etc/cron.allow
 chown root:root /etc/at.allow
 
-### ^^^ CONFIGURE CRON ^^^ ###
+----------------------------------
 
 5.2 SSH Server Configuration
 
 chown root:root /etc/ssh/sshd_config
 chmod og-rwx /etc/ssh/sshd_config
 
-################
+-----------------
 
 5.2.2 Ensure SSH Protocol is set to 2
 
@@ -59,7 +56,7 @@ DenyUsers <userlist>
 DenyGroups <grouplist>
 Banner /etc/issue.net
 
-################################
+----------------------------------
 
 5.3 Configure PAM
 5.3.1 Ensure password creation requirements are configured
@@ -75,7 +72,7 @@ ucredit = -1
 ocredit = -1
 lcredit = -1
 
-################
+-----------------
 
 5.3.2 Ensure lockout for failed password attempts is configured
 
@@ -84,7 +81,7 @@ vi /etc/pam.d/system-auth
 
 auth   [success=1 default=bad]		pam_unix.so
 
-################
+-----------------
 
 5.3.3 Ensure password reuse is limited
 
@@ -95,7 +92,7 @@ password sufficient pam_unix.so remember=5
 # -or-
 password required pam_pwhistory.so remember=5
 
-################
+-----------------
 
 5.3.4 Ensure password hashing algorithm is SHA-512
 
@@ -104,7 +101,7 @@ vi /etc/pam.d/system-auth
 
 password sufficient pam_unix.so sha512
 
-################################
+----------------------------------
 
 5.4 User Accounts and Environment
 5.4.1.1 Ensure password expiration is 365 days or less
@@ -112,7 +109,7 @@ password sufficient pam_unix.so sha512
 vi /etc/login.defs
 PASS_MAX_DAYS 90
 
-################
+-----------------
 
 5.4.1.2 Ensure minimum days between password changes is 7 or more
 
@@ -124,7 +121,7 @@ PASS_WARN_AGE 7
 useradd -D -f 30
 chage --inactive 30 <user>
 
-################
+-----------------
 
 5.4.1.5 Ensure all users last password change date is in the past
 cat /etc/shadow | cut -d: -f1
@@ -133,14 +130,15 @@ cat /etc/shadow | cut -d: -f1
 chage --list <user>
 	Last Change                                                       : <date>
 
-################
+-----------------
 
 5.4.2 Ensure system accounts are non-login
 
 Set the shell for any accounts returned by the audit script to /sbin/nologin :
 # usermod -s /sbin/nologin <user>
 
-The following script will automatically set all user shells required to /sbin/nologin and lock the sync , shutdown , and halt users:
+# The following script will automatically set all user shells required to /sbin/nologin
+# and lock the sync , shutdown , and halt users:
 
 #!/bin/bash
 for user in `awk -F: '($3 < 1000) {print $1 }' /etc/passwd` ; do
@@ -153,12 +151,12 @@ then
   fi
 done
 
-################
+-----------------
 
 5.4.3 Ensure default group for the root account is GID 0
 usermod -g 0 root
 
-################
+-----------------
 
 5.4.4 Ensure default user umask is 027 or more restrictive
 vi /etc/bashrc
@@ -166,7 +164,7 @@ vi /etc/profile
 vi /etc/profile.d/*.sh 
 	umask 027
 
-################
+-----------------
 
 5.4.5 Ensure default user shell timeout is 900 seconds or less
 
@@ -174,7 +172,7 @@ vi /etc/bashrc
 vi /etc/profile
 	TMOUT=600
 
-################
+----------------------------------
 
 5.6 Ensure access to the su command is restricted
 vi /etc/pam.d/su
